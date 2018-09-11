@@ -11,27 +11,14 @@ import UIKit
 class TodoListViewController: UITableViewController {
     
     var itemArray = [Item]()
-    let defaults = UserDefaults.standard
-
+    let dataFilePath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first?.appendingPathComponent("Item.plist")
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        let newItem1 = Item()
-        newItem1.title = "First"
-        itemArray.append(newItem1)
+         print("ที่อยู่ไฟล์ที่สร้างเอง \(dataFilePath)")
         
-        let newItem2 = Item()
-        newItem2.title = "Second"
-        itemArray.append(newItem2)
-        
-        let newItem3 = Item()
-        newItem3.title = "Third"
-        itemArray.append(newItem3)
-        
-        if let items = defaults.array(forKey: "TodoListArray") as? [Item] {
-            itemArray = items
-        }
-        
+        loadItems()
     }
     
     //REMARK: Tableview Datasource Methods
@@ -68,7 +55,7 @@ class TodoListViewController: UITableViewController {
 //        }
         itemArray[indexPath.row].done = !itemArray[indexPath.row].done //shorten
         
-        tableView.reloadData()
+        saveItems()
         
         tableView.deselectRow(at: indexPath, animated: true)
     }
@@ -87,9 +74,7 @@ class TodoListViewController: UITableViewController {
             
             self.itemArray.append(newItem1)
             
-            self.defaults.set(self.itemArray, forKey: "TodoListArray")
-            
-            self.tableView.reloadData()
+            self.saveItems()
             
         }
         
@@ -105,7 +90,34 @@ class TodoListViewController: UITableViewController {
         present(alert, animated: true, completion: nil)
     }
     
+    func saveItems() {
+        
+        let encorder = PropertyListEncoder()
+        
+        do {
+            let data = try encorder.encode(itemArray)
+            try data.write(to: dataFilePath!)
+        }
+        catch {
+            print("ใน encorder error นะ\(error)")
+        }
+        
+        self.tableView.reloadData()
+    }
     
+    func loadItems() {
+        
+        if let data = try? Data(contentsOf: dataFilePath!) {
+            let decorder = PropertyListDecoder()
+            do {
+            itemArray = try decorder.decode([Item].self, from: data)
+            }
+            catch {
+                print("ใน decorder error นะ\(error)")
+            }
+        }
+    }
+  
     
 }
 
